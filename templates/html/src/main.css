@@ -1,0 +1,15 @@
+.hello {
+  background-color: pink;
+  background: url('@/static/background.png');
+  animation: fade 1s ease-in-out;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
