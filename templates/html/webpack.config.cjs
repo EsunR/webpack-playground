@@ -30,6 +30,14 @@ module.exports = {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
       },
+      // 处理 js
+      {
+        test: /\.(?:js|mjs|cjs)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+        },
+      },
     ],
   },
   plugins: [

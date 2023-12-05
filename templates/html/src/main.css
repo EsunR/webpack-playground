@@ -2,6 +2,10 @@
   background-color: pink;
   background: url('@/static/background.png');
   animation: fade 1s ease-in-out;
+
+  a {
+    color: pink;
+  }
 }
 
 @keyframes fade {
