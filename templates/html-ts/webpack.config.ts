@@ -8,6 +8,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const config: WebpackConfiguration = {
   mode: isDev ? 'development' : 'production',
+  devtool: isDev ? 'eval-cheap-module-source-map' : 'source-map',
   entry: path.resolve(__dirname, './src/main.ts'),
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -45,11 +46,11 @@ const config: WebpackConfiguration = {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
-          'babel-loader',
+          isDev ? null : 'babel-loader',
           {
             loader: 'ts-loader',
             options: {
-              transpileOnly: true,
+              transpileOnly: isDev,
             },
           },
         ],
@@ -68,6 +69,7 @@ const config: WebpackConfiguration = {
     },
     extensions: ['.js', '.ts', '.tsx'],
   },
+  cache: false,
 };
 
 export default config;

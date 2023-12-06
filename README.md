@@ -306,7 +306,28 @@ module.exports = {
 
 这里我们使用 `export NODE_ENV=development` 与 `export NODE_ENV=production` 来为系统设置了一个 `NODE_ENV` 的环境变量。这意味着，我们在执行 `pnpm dev` 指令时，系统 `NODE_ENV` 环境变量为 `development`，在执行 `pnpm build` 指令时，系统 `NODE_ENV` 环境变量为 `production`。
 
-然后我们在 webpack 配置文件中使用 `process.env.NODE_ENV` 来获取当前的环境变量：
+但是这里存在一个问题，不通的操作环境可能会有不通的指令，比如在 Linux 系统中使用 `export` 指令，而在 Windows 系统中使用 `set` 指令。因此我们需要一个跨平台的指令来设置环境变量，这个指令就是 [cross-env](https://www.npmjs.com/package/cross-env)。
+
+首先安装 cross-env
+
+```sh
+pnpm install cross-env -D
+```
+
+然后将 `export` 指令替换为 `cross-env` 指令：
+
+```diff
+{
+  "scripts": {
+-   "dev": "export NODE_ENV=development && webpack serve --config webpack.config.cjs",
++   "dev": "cross-env NODE_ENV=development webpack serve --config webpack.config.cjs",
+-   "build": "export NODE_ENV=production && webpack --config webpack.config.cjs"
++   "build": "cross-env NODE_ENV=production webpack --config webpack.config.cjs"
+  }
+}
+```
+
+设定完环境变量后，我们在 webpack 配置文件中使用 `process.env.NODE_ENV` 来获取当前的环境变量：
 
 ```js
 const isDev = process.env.NODE_ENV !== 'production';
@@ -521,3 +542,246 @@ console.log(
   null !== (n = null == a ? void 0 : a.a) && void 0 !== n ? n : 'nothing',
 );
 ```
+
+很多人 babel 配置到这里就觉得万事大吉了，但实际上编译出来的代码并没有按照预想的那样去兼容到低版本浏览器。因为 babel 只会转换新的 JavaScript 语法，但是不会转换新的 API，也就是说，Babel 可以将你的箭头函数、const、let 等新语法转换成 ES5 的代码，但是它不会将 Promise、Array.from、Object.assign 等新的 API、对象转化为 ES5 环境可用的代码。
+
+因此我们如果想要让 ES5 环境的浏览器支持这些新的 API，就需要去实现它们，这种实现被称为 polyfill（语法垫片）。@babel/preset-env 支持引入需要的 polyfill，但是 preset-env 并没有这些 polyfill 的实现，因此我们需要安装 [core-js](https://www.npmjs.com/package/core-js)，core-js 是一个提供了大量 polyfill 的库，它的 polyfill 覆盖了 ES5、ES6、ES7、ES8、ES9、ES10、ES11、ES12 等所有的 ECMAScript 标准。
+
+```sh
+pnpm install core-js
+```
+
+然后，需要在 `babel.config.js` 中添加 `core-js` 的配置：
+
+```js
+module.exports = {
+  presets: [
+    [
+      '@babel/preset-env',
+      {
+        corejs: 3, // 指定 core-js 版本
+        useBuiltIns: 'usage', // 按需引入 polyfill
+      },
+    ],
+  ],
+};
+```
+
+运行构建指令后，我们会发现构建产出大了很多，这是因为 babel 从 core-js 引入了当前项目所需要的 polyfill。
+
+> 在决定是否使用 core-js 时，一定要考虑到你的项目是否真的需要这些 polyfill，比如项目如果使用 Vue3，那么就不需要引入大量为了兼容 ES5 环境的 polyfill，因为 Vue3 本身就是基于 ES6 环境开发的。
+
+但是此时还存在两个问题需要解决：
+
+1. babel 会将 core-js 的 polyfill 还有一些 helper 函数打包到每个文件中，这样会导致每个文件都包含了重复的代码，从而导致打包后的文件体积变大。
+2. babel 引入的 polyfill 函数会污染全局环境，这样会导致全局环境中存在大量的 polyfill 函数，这些函数可能会与其他库冲突。
+
+为了解决这两个问题，我们需要安装 [@babel/plugin-transform-runtime](https://www.npmjs.com/package/@babel/plugin-transform-runtime) 插件（需要 @babel/runtime 支持），它会将 babel 重复引用的函数转换为 runtime 函数，从而解决上面的问题，并减少打包后的文件体积。
+
+```sh
+pnpm install @babel/plugin-transform-runtime @babel/runtime -D
+```
+
+然后在 `babel.config.js` 中添加该插件：
+
+```js
+module.exports = {
+  presets: [
+    [
+      '@babel/preset-env',
+      {
+        corejs: 3, // 指定 core-js 版本
+        useBuiltIns: 'usage', // 按需引入 polyfill
+      },
+    ],
+  ],
+  plugins: ['@babel/plugin-transform-runtime'],
+};
+```
+
+# 3. 使用 Webpack 构建 TypeScript 开发环境
+
+对应代码：`/templates/html-ts`
+
+## 准备 TypeScript 环境
+
+首先安装 TypeScript：
+
+```sh
+pnpm install typescript -D
+```
+
+然后生成 tsconfig.json 配置文件：
+
+```sh
+pnpm exec tsc --init
+
+# npm
+npx tsc --init
+```
+
+这时候根目录就会生成 `tsconfig.json` 文件，这个文件是 TypeScript 的配置文件，我们可以在这个文件中配置 TypeScript 的编译选项，我们调整如下几个选项：
+
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext", // 编译后的代码使用最新的 ES 规范
+    "module": "CommonJS", // 使用 CommonJS 规范
+    "moduleResolution": "node10", // 模块解析方式，不配置在引用模块时如果不是完整路径会报错
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    }, // 配置路径别名，主要让 vscode 识别，跟 webpack.config.js 中的 alias 保持对应
+    "allowJs": true, // 允许编译 js 文件
+    "outDir": "./dist" // 编译产出，我们使用 webpack 不会根据这里的配置走，但是如果不配置 tsconfig 会报错
+    // 其余配置保持默认不改动
+  }
+}
+```
+
+之后我们将 `webpack.config.js` 修改为 `webpack.config.ts`，并将代码规范修改为 ESM，这样就可以编写有 TypeScript 提示的 webpack 配置了：
+
+```ts
+import path from 'path';
+// 引入 webpack 的类型
+import type { Configuration as WebpackConfiguration } from 'webpack';
+// 保证配置 devServer 时不会报类型错误
+import 'webpack-dev-server';
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+// 通过 TypeScript 我们可以添加类型声明
+const config: WebpackConfiguration = {
+  mode: isDev ? 'development' : 'production',
+  devtool: isDev ? 'eval-cheap-module-source-map' : 'source-map',
+  entry: path.resolve(__dirname, './src/main.ts'),
+  output: {
+    path: path.resolve(__dirname, './dist'),
+    clean: true,
+  },
+  // 其他 webpack 配置
+}
+
+export default config;
+```
+
+然后修改启动脚本：
+
+```diff
+{
+  "scripts": {
+-   "dev": "cross-env NODE_ENV=development webpack serve --config webpack.config.js",
++   "dev": "cross-env NODE_ENV=development webpack serve --config webpack.config.ts",
+-   "build": "cross-env NODE_ENV=production webpack --config webpack.config.js"
++   "build": "cross-env NODE_ENV=production webpack --config webpack.config.ts"
+  }
+}
+```
+
+执行构建指令后会报错，这是因为我们只安装了 typescript 环境，但是如果想让 webpack 执行 TypeScript 的配置文件还需要 TypeScript 的运行执行指令，因此我们需要安装 [ts-node](https://www.npmjs.com/package/ts-node)，ts-node 可以让我们在直接运行 ts 代码而不需要编译成 js：
+
+```sh
+pnpm install ts-node -D
+```
+
+之后，webpack 就可以成功执行 TypeScript 编写的 webpack 配置文件了。
+
+## 添加 ts-loader
+
+准备完环境后，我们将 js 代码修改为 ts 代码后，webpack 会报错，这是因为 webpack 默认只能处理 js 代码，如果要处理 ts 代码，需要添加对应的 loader，这里我们使用 [ts-loader](https://www.npmjs.com/package/ts-loader) 来处理 ts 代码：
+
+```sh
+pnpm install ts-loader -D
+```
+
+向 `webpack.config.ts` 中添加对应的 loader，同时要让 webpack 支持 ts 模块的解析:
+
+```ts
+const config: WebpackConfiguration = {
+  // ... 其他配置
+  module: {
+    rules: [
+      // ... 其他 loader ...
+      // 处理 ts 文件
+      {
+        test: /\.tsx?$/i,
+        use: [
+          /**
+           * 这里可选 babel-loader，因为 ts-loader 根据 tsconfig 中的 
+           * compilerOptions.target 如果设置为 ES5 会自动进行语法转换，
+           * 就不需要 babel-loader 参与了。但是如果需要加入 polyfill，
+           * 还是需要 babel-loader 的，因此这里演示加上 babel-loader。
+           */
+          isDev ? null : 'babel-loader', // 开发环境关闭 babel-loader 提升构建速度
+          {
+            loader: 'ts-loader',
+            options: {
+              // 指定特 tsconfig 的位置，也可以不指定，默认使用项目根目录的 tsconfig.json
+              configFile: path.resolve(__dirname, './tsconfig.json'),
+            },
+          },
+        ],
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    alias: {
+      // ... ...
+    },
+    // 将 .ts 文件添加到解析列表中，否则在 import ts 模块时，如果不带文件后缀就会报错
+    extensions: ['.js', '.ts'],
+  },
+};
+```
+
+> 除了 ts—loader，因为项目中使用了 babel，还可以使用 [babel-loader](https://www.npmjs.com/package/babel-loader) 结合 [@babel/preset-typescript](https://www.npmjs.com/package/@babel/preset-typescript) 来处理 ts，但是这样不支持类型检查，这里不再做演示。
+> 
+> 另外，如果追求编译速度，可以使用 esbuild 或者使用 swc 替换 babel。
+
+## 处理静态资源模块
+
+当引用静态资源时，ts 会报类型错误。
+
+![](https://esunr-image-bed.oss-cn-beijing.aliyuncs.com/picgo/202312061838999.png)
+
+这是因为 ts 无法识别我们导入的静态资源模块，通过编写类型声明文件可以解决这个问题。在 `src` 目录下创建 `types` 文件夹，并新建 `static.d.ts` 文件：
+
+```ts
+declare module '*.css' {
+  const classes: { readonly [key: string]: string };
+  export default classes;
+}
+
+declare module '*.png' {
+  const url: string;
+  export default url;
+}
+
+declare module '*.jpg' {
+  const url: string;
+  export default url;
+}
+
+declare module '*.jpeg' {
+  const url: string;
+  export default url;
+}
+
+declare module '*.gif' {
+  const url: string;
+  export default url;
+}
+
+declare module '*.svg' {
+  const url: string;
+  export default url;
+}
+
+declare module '*.webp' {
+  const url: string;
+  export default url;
+}
+```
+
+这样，引入静态资源模块时，ts 就不会报类型错误的问题了。

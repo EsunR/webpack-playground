@@ -21,3 +21,11 @@ export function cloneDeep(obj: any, hash = new WeakMap()) {
   }
   return cloneObj;
 }
+
+export function wait(time: number) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(void 0);
+    }, time);
+  });
+}
