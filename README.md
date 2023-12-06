@@ -246,6 +246,98 @@ https://webpack.docschina.org/configuration/dev-server/
 
 在终端运行 `pnpm dev` 就可以启动 dev server 了。
 
+## Source map 源代码映射
+
+如果我们的代码中存在一行报错，那么在没有配置 source map 的情况下，浏览器控制台显示的是编译后的代码，这样我们很难定位到错误的位置。
+
+如下，我们根据控制台报错信息，定位到的代码是经过编译的，并且不会告诉我们具体文件的第几行出错了：
+
+![](https://esunr-image-bed.oss-cn-beijing.aliyuncs.com/picgo/202312061421050.png)
+
+![](https://esunr-image-bed.oss-cn-beijing.aliyuncs.com/picgo/202312061421633.png)
+
+因此 webpack 提供了一种生成源代码映射文件的功能，通过这个文件，我们可以将编译后的代码映射到源代码，这样就可以在浏览器控制台中看到源代码了。
+
+如下，开启了 source map 后，根据控制台的报错信息，定位到的文件是编译前的代码，并且能够告诉我们具体文件的第几行出错了：
+
+![](https://esunr-image-bed.oss-cn-beijing.aliyuncs.com/picgo/202312061423011.png)
+
+![](https://esunr-image-bed.oss-cn-beijing.aliyuncs.com/picgo/202312061424398.png)
+
+通过 `devtool` 选项可以开启源代码映射：
+
+```js
+module.exports = {
+  // webpack 其他配置
+  devtool: 'source-map',
+};
+```
+
+`devtool` 的值除了 `source-map` 之外，还支持以下几个常用选项：
+
+- eval: 每个 module 会封装到 eval 里包裹起来执行，并且会在末尾追加注释 //@ sourceURL.
+- source-map: 生成一个 SourceMap 文件.
+- hidden-source-map: 和 source-map 一样，但不会在 bundle 末尾追加注释.
+- inline-source-map: 生成一个 DataUrl 形式的 SourceMap 文件.
+- eval-source-map: 每个 module 会通过 eval() 来执行，并且生成一个 DataUrl 形式的 SourceMap .
+- cheap-source-map： 生成一个没有列信息（column-mappings）的 SourceMaps 文件，不包含 loader 的 sourcemap（譬如 babel 的 sourcemap）
+- cheap-module-source-map： 生成一个没有列信息（column-mappings）的 SourceMaps 文件，同时 loader 的 sourcemap 也被简化为只包含对应行的。
+
+不通的选项构建速度是不同的，为了达到一个比较好的构建效果，我们通常建议在开发模式下使用 `eval-cheap-module-source-map` 来提升构建速度。在生产环境下使用 `source-map` 来将 source map 文件单独抽离出来，不要让 source map 的代码被打包到源代码中。
+
+## 将开发环境和生产环境进行区分
+
+在编写 webpack 配置时，开发环境和生产环境可能会需要不通的配置。比如在上一节中，我们讲了要在开发环境下使用 `eval-cheap-module-source-map` 而在生产环境下使用 `source-map`。通常我们会使用构建时的系统环境变量来区分生产与开发环境。
+
+我们将 package.json 中的构建脚本进行修改：
+
+```diff
+{
+  "scripts": {
+-   "dev": "webpack serve --config webpack.config.cjs",
++   "dev": "export NODE_ENV=development && webpack serve --config webpack.config.cjs",
+-   "build": "webpack --config webpack.config.cjs"
++   "build": "export NODE_ENV=production && webpack --config webpack.config.cjs"
+  }
+}
+```
+
+`export` 指令是 Linux 系统中的一个指令，它可以设置环境变量。比如我们在终端中输入 `export TEST_ENV=1` 这样就设置了一个系统环境变量，我们可以通过 `echo $TEST_ENV` 来输出这个环境变量（但是这个环境变量只在当前终端中生效，新建了一个终端后这个环境变量就不存在了）。
+
+这里我们使用 `export NODE_ENV=development` 与 `export NODE_ENV=production` 来为系统设置了一个 `NODE_ENV` 的环境变量。这意味着，我们在执行 `pnpm dev` 指令时，系统 `NODE_ENV` 环境变量为 `development`，在执行 `pnpm build` 指令时，系统 `NODE_ENV` 环境变量为 `production`。
+
+然后我们在 webpack 配置文件中使用 `process.env.NODE_ENV` 来获取当前的环境变量：
+
+```js
+const isDev = process.env.NODE_ENV !== 'production';
+```
+
+这样一来，当 `isDev` 为 `true` 时，就代表当前执行的指令是 `pnpm dev` 也就是开发环境；当 `isDev` 为 `false` 时，就代表当前执行的指令是 `pnpm build` 也就是生产环境。通过这个变量我们就可以为 webpack 配置进行一些差异化的配置：
+
+```js
+const isDev = process.env.NODE_ENV !== 'production';
+
+module.exports = {
+  mode: isDev ? 'development' : 'production', // 根据环境变量设置 mode
+  devtool: isDev ? 'eval-cheap-module-source-map' : 'source-map', // 根据环境变量设置 devtool
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: [
+          // 在开发环境下使用 style-loader 以提升构建速度，生产环境下使用 mini-css-extract-plugin 插件抽离 css
+          isDev ? 'style-loader' : MiniCssExtractPlugin.loader,
+          'css-loader',
+          'postcss-loader',
+        ],
+      },
+      // ... ...
+    ],
+  },
+  // 其他 webpack 配置
+};
+```
+
 ## 进阶：post-css
 
 [PostCSS](https://postcss.org/) 是一个用 JavaScript 编写的工具，它可以对 CSS 进行处理、转换和优化，如：
@@ -425,5 +517,7 @@ console.log(o?.a ?? 'nothing');
 为了兼容大部分的浏览器，babel 将可选链操作符进行转换为三元运算符，得出编译后的代码为：
 
 ```js
-console.log(null !== (n = null == a ? void 0 : a.a) && void 0 !== n ? n : 'nothing')
+console.log(
+  null !== (n = null == a ? void 0 : a.a) && void 0 !== n ? n : 'nothing',
+);
 ```

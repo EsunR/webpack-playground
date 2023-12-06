@@ -1,13 +1,14 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+import path from 'path';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import type { Configuration as WebpackConfiguration } from 'webpack';
+import 'webpack-dev-server';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-module.exports = {
+const config: WebpackConfiguration = {
   mode: isDev ? 'development' : 'production',
-  devtool: isDev ? 'eval-cheap-module-source-map' : 'source-map',
-  entry: path.resolve(__dirname, './src/main.js'),
+  entry: path.resolve(__dirname, './src/main.ts'),
   output: {
     path: path.resolve(__dirname, './dist'),
     clean: true,
@@ -39,6 +40,20 @@ module.exports = {
           loader: 'babel-loader',
         },
       },
+      // 处理 ts
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          'babel-loader',
+          {
+            loader: 'ts-loader',
+            options: {
+              transpileOnly: true,
+            },
+          },
+        ],
+      },
     ],
   },
   plugins: [
@@ -51,5 +66,8 @@ module.exports = {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    extensions: ['.js', '.ts', '.tsx'],
   },
 };
+
+export default config;
