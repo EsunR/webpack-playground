@@ -306,7 +306,7 @@ module.exports = {
 
 这里我们使用 `export NODE_ENV=development` 与 `export NODE_ENV=production` 来为系统设置了一个 `NODE_ENV` 的环境变量。这意味着，我们在执行 `pnpm dev` 指令时，系统 `NODE_ENV` 环境变量为 `development`，在执行 `pnpm build` 指令时，系统 `NODE_ENV` 环境变量为 `production`。
 
-但是这里存在一个问题，不通的操作环境可能会有不通的指令，比如在 Linux 系统中使用 `export` 指令，而在 Windows 系统中使用 `set` 指令。因此我们需要一个跨平台的指令来设置环境变量，这个指令就是 [cross-env](https://www.npmjs.com/package/cross-env)。
+但是这里存在一个问题，不同的操作环境可能会有不通的指令，比如在 Linux 系统中使用 `export` 指令，而在 Windows 系统中使用 `set` 指令。因此我们需要一个跨平台的指令来设置环境变量，这个指令就是 [cross-env](https://www.npmjs.com/package/cross-env)。
 
 首先安装 cross-env
 
