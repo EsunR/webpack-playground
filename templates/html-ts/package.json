@@ -2,10 +2,10 @@
   "name": "@webpack-playground/html-ts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development webpack serve --config webpack.config.ts",
-    "build": "cross-env NODE_ENV=production webpack --config webpack.config.ts"
+    "dev": "cross-env NODE_ENV=development node --loader ts-node/esm node_modules/webpack-cli/bin/cli.js serve --config webpack.config.ts",
+    "build": "cross-env NODE_ENV=production node --loader ts-node/esm node_modules/webpack-cli/bin/cli.js --config webpack.config.ts"
   },
   "keywords": [],
   "author": "",

@@ -2,9 +2,11 @@ import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import type { Configuration as WebpackConfiguration } from 'webpack';
+import url from 'url';
 import 'webpack-dev-server';
 
 const isDev = process.env.NODE_ENV !== 'production';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const config: WebpackConfiguration = {
   mode: isDev ? 'development' : 'production',
@@ -46,7 +48,7 @@ const config: WebpackConfiguration = {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
-          isDev ? null : 'babel-loader',
+          'babel-loader',
           {
             loader: 'ts-loader',
             options: {

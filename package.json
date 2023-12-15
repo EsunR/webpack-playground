@@ -12,6 +12,10 @@
   "volta": {
     "node": "18.19.0"
   },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@8.6.6",
   "devDependencies": {
     "@types/node": "^20.10.2",
     "cross-env": "^7.0.3",
