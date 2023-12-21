@@ -28,6 +28,11 @@ const oBtn = document.querySelector('button');
 oBtn?.addEventListener('click', async () => {
   await wait(1000);
   console.log('button clicked!');
+
+  const asyncUtils = await import(
+    /* webpackChunkName: "async-utils" */ '@/utils/asyncUtils'
+  );
+  asyncUtils.runAsyncUtil();
 });
 
 const obj = { a: [1, 2, 3] };

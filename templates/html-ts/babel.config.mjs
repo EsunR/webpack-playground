@@ -3,8 +3,8 @@ export default {
     [
       '@babel/preset-env',
       {
-        corejs: 3,
-        useBuiltIns: 'usage',
+        corejs: 3, // 为编译后的代码注入 core-js@3 的 polyfill
+        useBuiltIns: 'usage', // 按需注入 polyfill
       },
     ],
   ],

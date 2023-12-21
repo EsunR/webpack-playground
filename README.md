@@ -625,7 +625,7 @@ npx tsc --init
 ```json
 {
   "compilerOptions": {
-    "target": "ESNext", // 编译后的代码使用最新的 ES 规范
+    "target": "ES5", // 将代码转为 ES5 语法
     "module": "CommonJS", // 使用 CommonJS 规范
     "moduleResolution": "node10", // 模块解析方式，不配置在引用模块时如果不是完整路径会报错
     "baseUrl": "./",
@@ -706,13 +706,6 @@ const config: WebpackConfiguration = {
       {
         test: /\.tsx?$/i,
         use: [
-          /**
-           * 这里可选 babel-loader，因为 ts-loader 根据 tsconfig 中的 
-           * compilerOptions.target 如果设置为 ES5 会自动进行语法转换，
-           * 就不需要 babel-loader 参与了。但是如果需要加入 polyfill，
-           * 还是需要 babel-loader 的，因此这里演示加上 babel-loader。
-           */
-          isDev ? null : 'babel-loader', // 开发环境关闭 babel-loader 提升构建速度
           {
             loader: 'ts-loader',
             options: {
@@ -729,8 +722,8 @@ const config: WebpackConfiguration = {
     alias: {
       // ... ...
     },
-    // 将 .ts 文件添加到解析列表中，否则在 import ts 模块时，如果不带文件后缀就会报错
-    extensions: ['.js', '.ts'],
+    // 将 .ts (如果有需要也要加入 .tsx) 文件添加到解析列表中，否则在 import ts 模块时，如果不带文件后缀就会报错
+    extensions: ['.js', '.ts', '.tsx'],
   },
 };
 ```
@@ -785,3 +778,7 @@ declare module '*.webp' {
 ```
 
 这样，引入静态资源模块时，ts 就不会报类型错误的问题了。
+
+## ts-loader 结合 babel-loader
+
+参考：[《在 Webpack 中同时使用 ts-loader 和 babel-loader》](https://blog.esunr.xyz/2023/12/88456067f15c.html)

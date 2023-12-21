@@ -29,3 +29,7 @@ export function wait(time: number) {
     }, time);
   });
 }
+
+export function doSomethingAdd(a: number, b: number) {
+  return a + b;
+}

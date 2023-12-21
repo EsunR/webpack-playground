@@ -3,9 +3,9 @@ module.exports = {
     [
       '@babel/preset-env',
       {
-        // preset config
-        corejs: 3,
-        useBuiltIns: 'usage',
+        corejs: 3, // 为编译后的代码注入 core-js@3 的 polyfill
+        useBuiltIns: 'usage', // 按需注入 polyfill
+        modules: false,
       },
     ],
   ],
