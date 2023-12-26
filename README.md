@@ -1,4 +1,4 @@
-# 0. Get Ready
+# 1. Get Ready
 
 本项目由 pnpm 管理，因此需要全局安装 pnpm：
 
@@ -25,11 +25,11 @@ pnpm init
 pnpm install webpack webpack-cli -D
 ```
 
-# 1. 概念
+# 2. 概念
 
 https://webpack.docschina.org/concepts/
 
-# 2. 实践
+# 3. 实践
 
 - [1. 第一个 Webpack 应用](./docs/1.第一个Webpack应用.md)
 - [2. 使用 Webpack 构建 TypeScript 开发环境](./docs/2.使用Webpack构建TypeScript开发环境.md)
