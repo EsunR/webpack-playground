@@ -2,6 +2,7 @@ module.exports = {
   extends: [
     '../../.eslintrc.cjs',
     'eslint:recommended',
+    'plugin:prettier/recommended',
     'plugin:@typescript-eslint/recommended',
   ],
   parser: '@typescript-eslint/parser',

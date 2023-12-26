@@ -33,3 +33,4 @@ https://webpack.docschina.org/concepts/
 
 - [1. 第一个 Webpack 应用](./docs/1.第一个Webpack应用.md)
 - [2. 使用 Webpack 构建 TypeScript 开发环境](./docs/2.使用Webpack构建TypeScript开发环境.md)
+- [3. 使用 Webpack 构建 Vue 开发环境](./docs/3.使用Webpack构建Vue开发环境.md)
