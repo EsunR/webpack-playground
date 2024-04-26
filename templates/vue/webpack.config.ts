@@ -81,6 +81,9 @@ const config: WebpackConfiguration = {
     },
     extensions: ['.js', '.ts', '.tsx'],
   },
+  optimization: {
+    minimize: false,
+  },
 };
 
 export default config;

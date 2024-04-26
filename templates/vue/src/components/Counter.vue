@@ -7,7 +7,10 @@ defineOptions({
 const count = ref(0);
 
 const addCount = (num: number) => {
-  count.value += num;
+  import(/* webpackChunkName: "lodash" */ 'lodash').then(({ default: _ }) => {
+    count.value = _.add(count.value, num);
+    console.log('find it!!!!');
+  });
 };
 </script>
 
